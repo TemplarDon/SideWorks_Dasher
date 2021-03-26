@@ -23,6 +23,7 @@ public class WallTilemap : MonoBehaviour
         if (collision.gameObject.GetComponent<PlayerController>())
         {
             collision.gameObject.GetComponent<PlayerController>().SetState(PlayerController.PLAYER_STATE.NORMAL, 0);
+            collision.gameObject.GetComponent<Rigidbody2D>().velocity = Vector3.zero;
         }
     }
 }
