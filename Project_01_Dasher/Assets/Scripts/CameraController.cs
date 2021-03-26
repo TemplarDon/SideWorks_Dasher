@@ -57,7 +57,7 @@ public class CameraController : MonoBehaviour
                     m_isCameraShaking = false;
                     GetComponent<Camera>().orthographicSize = m_origCameraSize;
 
-                    Debug.Log("Camera Shake ends");
+                    //Debug.Log("Camera Shake ends");
                 }
             }  
         }

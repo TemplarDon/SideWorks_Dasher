@@ -25,6 +25,8 @@ public class PlayerController : MonoBehaviour
     private float m_timer; // general use timer
 
     private Rigidbody2D m_rigidbody;
+    private PlayerLivesController m_healthController;
+    private PlayerSpriteController m_spriteController;
 
     // Start is called before the first frame update
     void Start()
@@ -35,6 +37,9 @@ public class PlayerController : MonoBehaviour
         m_rigidbody = GetComponent<Rigidbody2D>();
 
        if (!m_directionObject) m_directionObject = transform.Find("DirectionObject");
+
+        m_healthController = GetComponent<PlayerLivesController>();
+        m_spriteController = GetComponent<PlayerSpriteController>();
     }
 
     // Update is called once per frame
@@ -50,7 +55,10 @@ public class PlayerController : MonoBehaviour
                 MovementUpdate();
                 break;
             case PLAYER_STATE.DASHING: break;
-            case PLAYER_STATE.DAMAGED: break;
+            case PLAYER_STATE.DAMAGED:
+                // get sprite controller to play animation
+                m_spriteController.PlayAnim();
+                break;
             case PLAYER_STATE.DEAD: break;
             default: break;
         }
@@ -137,9 +145,11 @@ public class PlayerController : MonoBehaviour
             {
                 case PLAYER_STATE.NORMAL: break;
                 case PLAYER_STATE.DASHING:
-                    m_currState = PLAYER_STATE.NORMAL;
+                    SetState(PLAYER_STATE.NORMAL);
                     break;
-                case PLAYER_STATE.DAMAGED: break;
+                case PLAYER_STATE.DAMAGED:
+                    SetState(PLAYER_STATE.NORMAL);
+                    break;
                 case PLAYER_STATE.DEAD: break;
             }
             m_timer = 0;
@@ -170,5 +180,13 @@ public class PlayerController : MonoBehaviour
 
         m_timer = timer;
         m_currState = ps;
+
+        m_spriteController.ChangeSprite(ps);
+    }
+
+    public void RecoilPlayer(Transform otherGo, float recoilStrength = 1)
+    {
+        Vector3 dirVec = (transform.position - otherGo.position).normalized;
+        m_rigidbody.velocity = dirVec * recoilStrength;
     }
 }
