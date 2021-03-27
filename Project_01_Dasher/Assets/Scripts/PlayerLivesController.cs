@@ -10,6 +10,9 @@ public class PlayerLivesController : MonoBehaviour
 
     private PlayerController m_player;
 
+    public delegate void DamageTaken();
+    public static event DamageTaken OnDamage;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -27,6 +30,8 @@ public class PlayerLivesController : MonoBehaviour
         m_lives--;
         m_player.SetState(PlayerController.PLAYER_STATE.DAMAGED, m_damageImmunityTime);
         m_player.RecoilPlayer(otherGo, m_damageRecoilDist);
+
+        OnDamage();
     }
 
 }
