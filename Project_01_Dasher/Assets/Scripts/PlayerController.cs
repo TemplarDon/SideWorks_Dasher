@@ -7,12 +7,13 @@ public class PlayerController : MonoBehaviour
     public float m_normalSpeed;
     public float m_dashSpeed;
     public float m_maxSpeed;
-    public float m_dashTime;
+    public float m_dashCooldown;
+    public float m_dashStopSpeed;
 
     public float m_directionObjectOffset;
 
     public List<KeyCode> m_keys;
-    public Transform m_directionObject;
+    public DirectionObjectController m_directionObject;
 
     public enum PLAYER_STATE
     {
@@ -36,7 +37,7 @@ public class PlayerController : MonoBehaviour
 
         m_rigidbody = GetComponent<Rigidbody2D>();
 
-       if (!m_directionObject) m_directionObject = transform.Find("DirectionObject");
+       if (!m_directionObject) m_directionObject = transform.Find("DirectionObject").GetComponent<DirectionObjectController>();
 
         m_healthController = GetComponent<PlayerLivesController>();
         m_spriteController = GetComponent<PlayerSpriteController>();
@@ -51,10 +52,18 @@ public class PlayerController : MonoBehaviour
         {
             case PLAYER_STATE.NORMAL:
                 SpeedCheck();
-                DirectionUpdate();
                 MovementUpdate();
+
+                m_directionObject.MoveToPosition(transform.position, m_directionObjectOffset);
+                if (m_timer > 0) m_directionObject.DoColourTransition(m_timer, m_dashCooldown);
                 break;
-            case PLAYER_STATE.DASHING: break;
+            case PLAYER_STATE.DASHING:
+                if (m_timer > 0) m_directionObject.DoColourTransition(m_timer, m_dashCooldown);
+
+                // Check if player can start moving while dash is still on cooldown
+                if (m_rigidbody.velocity.sqrMagnitude <= m_dashStopSpeed * m_dashStopSpeed)
+                    SetState(PLAYER_STATE.NORMAL); 
+                break;
             case PLAYER_STATE.DAMAGED:
                 // get sprite controller to play animation
                 m_spriteController.PlayAnim();
@@ -96,12 +105,15 @@ public class PlayerController : MonoBehaviour
                 switch (kc)
                 {
                     case KeyCode.Space:
-                        m_currState = PLAYER_STATE.DASHING;
-                        m_timer = m_dashTime;
+                        // Stop the player from dashing if the timer is still counting down
+                        if (m_timer > 0) break;
+
+                        SetState(PLAYER_STATE.DASHING);
+                        m_timer = m_dashCooldown;
                         m_rigidbody.velocity = Vector2.zero;
 
                         Vector3 dirVec;
-                        dirVec = (m_directionObject.position - transform.position);
+                        dirVec = (m_directionObject.gameObject.transform.position - transform.position);
                         dirVec.z = 0;
                         m_rigidbody.AddForce(dirVec * m_dashSpeed, ForceMode2D.Impulse);
                         break;
@@ -145,7 +157,6 @@ public class PlayerController : MonoBehaviour
             {
                 case PLAYER_STATE.NORMAL: break;
                 case PLAYER_STATE.DASHING:
-                    SetState(PLAYER_STATE.NORMAL);
                     break;
                 case PLAYER_STATE.DAMAGED:
                     SetState(PLAYER_STATE.NORMAL);
@@ -156,32 +167,17 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Updates direction object to face mouse at an offset
-    void DirectionUpdate()
-    {
-        // get mouse pos
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-        // get angle with atan2
-        float angle = Mathf.Atan2(mousePos.y - transform.position.y, mousePos.x - transform.position.x) * Mathf.Rad2Deg;
-
-        // use angle and trigo to get new pos
-        Vector3 newPos;
-        newPos.z = -1;
-        newPos.y = m_directionObjectOffset * Mathf.Sin(angle * Mathf.Deg2Rad);
-        newPos.x = m_directionObjectOffset * Mathf.Cos(angle * Mathf.Deg2Rad);
-
-        m_directionObject.position = newPos + transform.position;
-    }
-
     public void SetState(PLAYER_STATE ps, float timer = 0)
     {
         //Debug.Log("Player State set -> " + ps.ToString() + " Timer set -> " + timer);
 
-        m_timer = timer;
+        if (timer != 0) m_timer = timer;
         m_currState = ps;
 
         m_spriteController.ChangeSprite(ps);
+
+        // Set the direction to ready colour
+        if (timer != 0) m_directionObject.ResetColour();
     }
 
     public void RecoilPlayer(Transform otherGo, float recoilStrength = 1)
