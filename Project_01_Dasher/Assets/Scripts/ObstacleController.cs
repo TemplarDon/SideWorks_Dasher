@@ -4,19 +4,18 @@ using UnityEngine;
 
 public class ObstacleController : MonoBehaviour
 {
-    public Vector2 m_dir;
-    public float m_speed;
+    private ObstacleGroupController m_attachedGroup;
 
     // Start is called before the first frame update
     void Start()
     {
+        m_attachedGroup = GetComponentInParent<ObstacleGroupController>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        // move obstacle in dir
-        transform.Translate(m_dir.normalized * m_speed * Time.deltaTime);
+
     }
 
     void OnCollisionEnter2D(Collision2D collision)
@@ -27,7 +26,7 @@ public class ObstacleController : MonoBehaviour
         if (collidedGo.tag == "Player")
         {
             collidedGo.GetComponent<PlayerLivesController>().TakeDamage(transform);
-            Destroy(gameObject);
+            Destroy(m_attachedGroup.gameObject);
         }
     }
 }

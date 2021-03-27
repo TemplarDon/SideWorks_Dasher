@@ -180,6 +180,11 @@ public class PlayerController : MonoBehaviour
         if (timer != 0) m_directionObject.ResetColour();
     }
 
+    public PLAYER_STATE GetState()
+    {
+        return m_currState;
+    }
+
     public void RecoilPlayer(Transform otherGo, float recoilStrength = 1)
     {
         Vector3 dirVec = (transform.position - otherGo.position).normalized;
