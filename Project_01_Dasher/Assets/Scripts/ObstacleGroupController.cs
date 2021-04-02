@@ -17,6 +17,6 @@ public class ObstacleGroupController : MonoBehaviour
     void Update()
     {
         // move obstacle in dir
-        transform.Translate(m_dir.normalized * m_speed * Time.deltaTime);
+        transform.Translate(m_dir.normalized * m_speed * Time.deltaTime, Space.World);
     }
 }
